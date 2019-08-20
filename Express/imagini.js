@@ -2,7 +2,7 @@ const express = require("express");
 const sharp = require("sharp");
 const app = express();
 
-app.get(/\/thumbnail\.(jpg|png)/, (req, res, next) => {
+app.get(/\/thumbnail\.(jpg|png|tiff)/, (req, res, next) => {
     let format = (req.params[0] == "png" ? "png" : "jpg");
     let width = +req.query.width || 300;
     let height = +req.query.height || 200;
