@@ -11,7 +11,7 @@ app.post("/uploads/:image", bodyparser.raw({
 }), (req, res) => {
     let image = req.params.image.toLowerCase();
 
-    if (!image.match(/\.(pgn|jpg)$/)) {
+    if (!image.match(/\.(png|jpg)$/)) {
         return res.status(403).end();
     }
 
