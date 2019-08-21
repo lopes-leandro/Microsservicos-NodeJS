@@ -1,5 +1,7 @@
 # Microsserviços-NodeJS
 
+## endpoint /uploads
+
 node imagini
 
 test: 
