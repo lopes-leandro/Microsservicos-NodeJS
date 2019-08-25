@@ -5,13 +5,34 @@ const express = require("express");
 const sharp = require("sharp");
 const app = express();
 
+app.param("image", (req, res, next, image) => {
+    if (!image.match(/\.(png|jpg)$/i)) {
+        return res.status(req.method == "POST" ? 403 : 404).end();
+    }
+
+    req.image = image;
+
+    req.localpath = path.join(__dirname, "uploads", req.image);
+
+    return next();
+});
+
+app.get("/uploads/:image", (req, res) => {
+
+    let fd = fs.createReadStream(req.localpath);
+
+    fd.on("error", (e) => {
+        res.status(e.code == "ENOENT" ? 404 : 500).end();
+    });
+
+    res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
+
+    fd.pipe(res);
+});
+
 app.head("/uploads/:image", (req, res) => {
-    fs.access(
-        path.join(__dirname, "uploads", req.params.image),
-        fs.constants.R_OK,
-        (err) => {
-            res.status(err ? 404 : 200);
-            res.end();
+    fs.access( req.localpath, fs.constants.R_OK, (err) => {
+            res.status(err ? 404 : 200).end();
         }        
     );
 });
@@ -21,22 +42,16 @@ app.post("/uploads/:image", bodyparser.raw({
     limit: "100mb",
     type: "image/*"
 }), (req, res) => {
-    let image = req.params.image.toLowerCase();
-
-    if (!image.match(/\.(png|jpg)$/)) {
-        return res.status(403).end();
-    }
-
-    let len = req.body.length;
-    let fd = fs.createWriteStream(path.join(__dirname, "uploads", image),{
+    
+    let fd = fs.createWriteStream(req.localpath, {
         flags: "w+",
         encoding: "binary"
     });
 
-    fd.write(req.body);
-    fd.end();
+    fd.end(req.body);
+
     fd.on("close", () => {
-        res.send({status: "ok", size: len});
+        res.send({status: "ok", size: req.body.length});
     });
 });
 
