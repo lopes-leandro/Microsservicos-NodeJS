@@ -5,6 +5,37 @@ const express = require("express");
 const sharp = require("sharp");
 const app = express();
 
+//  altera nossa rota de download
+app.param("width", (req, res, next, width) => {
+    req.width = +width;
+    return next();
+});
+
+app.param("height", (req, res, next, height) => {
+    req.height = +height;
+    return next();
+});
+
+function download_image(req, res) {
+    fs.access(req.localpath, fs.constants.R_OK, (err) => {
+        if (err) return res.status(404).end();
+
+        let image = sharp(req.localpath);
+
+        if (req.width && req.height) {
+            image.ignoreAspectRatio();
+        }
+
+        if (req.width && req.height) {
+            image.resize(req.width, req.height);
+        }
+
+        res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
+
+        image.pipe(res);
+    });
+}
+
 app.param("image", (req, res, next, image) => {
     if (!image.match(/\.(png|jpg)$/i)) {
         return res.status(req.method == "POST" ? 403 : 404).end();
