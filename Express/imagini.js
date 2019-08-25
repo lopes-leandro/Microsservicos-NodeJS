@@ -18,27 +18,14 @@ app.param("image", (req, res, next, image) => {
 });
 
 app.get("/uploads/:image", (req, res) => {
-    let ext = path.extname(req.params.image);
 
-    if (!ext.match(/^\.(png|jpg)$/)) {
-        return res.status(404).end();
-    }
-
-    let fd = fs.createReadStream(path.join(__dirname, "uploads", req.params.image));
+    let fd = fs.createReadStream(req.localpath);
 
     fd.on("error", (e) => {
-        if (e.code == "ENOENT") {
-            res.status(404).end();
-            if (req.accepts('html')) {
-                res.setHeader("Content-Type", "text/html");
-                res.write("<strong>Error:</strong> image not found");
-            }
-            return res.end();
-        }
-        res.status(500).end();
+        res.status(e.code == "ENOENT" ? 404 : 500).end();
     });
 
-    res.setHeader("Content-Type", "image/" + ext.substr(1));
+    res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
 
     fd.pipe(res);
 });
