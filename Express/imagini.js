@@ -44,12 +44,8 @@ app.get("/uploads/:image", (req, res) => {
 });
 
 app.head("/uploads/:image", (req, res) => {
-    fs.access(
-        path.join(__dirname, "uploads", req.params.image),
-        fs.constants.R_OK,
-        (err) => {
-            res.status(err ? 404 : 200);
-            res.end();
+    fs.access( req.localpath, fs.constants.R_OK, (err) => {
+            res.status(err ? 404 : 200).end();
         }        
     );
 });
