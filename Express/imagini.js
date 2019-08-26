@@ -5,6 +5,17 @@ const express = require("express");
 const sharp = require("sharp");
 const app = express();
 
+//  altera nossa rota de download
+app.param("width", (req, res, next, width) => {
+    req.width = +width;
+    return next();
+});
+
+app.param("height", (req, res, next, height) => {
+    req.height = +height;
+    return next();
+});
+
 app.param("image", (req, res, next, image) => {
     if (!image.match(/\.(png|jpg)$/i)) {
         return res.status(req.method == "POST" ? 403 : 404).end();
@@ -17,18 +28,48 @@ app.param("image", (req, res, next, image) => {
     return next();
 });
 
-app.get("/uploads/:image", (req, res) => {
+function download_image(req, res) {
+    fs.access(req.localpath, fs.constants.R_OK, (err) => {
+        if (err) return res.status(404).end();
 
-    let fd = fs.createReadStream(req.localpath);
+        let image = sharp(req.localpath);
 
-    fd.on("error", (e) => {
-        res.status(e.code == "ENOENT" ? 404 : 500).end();
+        if (req.width && req.height) {
+            /*
+             * fit: by default 'cover'
+             * ('contain', 'fill', 'inside' ou 'outside')
+             **************************************************/
+            image.resize(req.width, req.height, {fit: 'fill'});
+        } else {
+            image.resize(req.width, req.height);
+        }
+
+        res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
+
+        image.pipe(res);
     });
+}
 
-    res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
+app.get("/uploads/:width(\\d+)x:height(\\d+)-:image", download_image);
 
-    fd.pipe(res);
-});
+app.get("/uploads/_x:height(\\d+)-:image", download_image);
+
+app.get("/uploads/:width(\\d+)x_-:image", download_image);
+
+app.get("/uploads/:image", download_image);
+
+// app.get("/uploads/:image", (req, res) => {
+
+//     let fd = fs.createReadStream(req.localpath);
+
+//     fd.on("error", (e) => {
+//         res.status(e.code == "ENOENT" ? 404 : 500).end();
+//     });
+
+//     res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
+
+//     fd.pipe(res);
+// });
 
 app.head("/uploads/:image", (req, res) => {
     fs.access( req.localpath, fs.constants.R_OK, (err) => {
