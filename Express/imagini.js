@@ -43,20 +43,21 @@ function download_image(req, res) {
         if (err) return res.status(404).end();
 
         let image = sharp(req.localpath);
+        let width = +req.query.width;
+        let height = +req.query.height;
+        let greyscale = (req.query.greyscale == "y");
 
-        if (req.width && req.height) {
+        if (width > 0 && height > 0) {
             /*
              * fit: by default 'cover'
              * ('contain', 'fill', 'inside' ou 'outside')
              **************************************************/
-            image.resize(req.width, req.height, { fit: 'fill' });
+            image.resize(width || null, height || null, { fit: 'fill' });
         } else {
-            image.resize(req.width, req.height);
+            image.resize(width || null, height || null);
         }
 
-        if (req.greyscale) {
-            image.greyscale();
-        }
+        if (req.greyscale) image.greyscale();
 
         res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
 
