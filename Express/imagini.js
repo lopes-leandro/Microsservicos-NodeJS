@@ -36,7 +36,7 @@ function download_image(req, res) {
             image.resize(width || null, height || null);
         }
 
-        if (req.greyscale) image.greyscale();
+        if (greyscale) image.greyscale();
 
         res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
 
