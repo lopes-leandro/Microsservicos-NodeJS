@@ -54,18 +54,26 @@ function download_image(req, res) {
             image.resize(req.width, req.height);
         }
 
+        if (req.greyscale) {
+            image.greyscale();
+        }
+
         res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
 
         image.pipe(res);
     });
 }
 
+app.get("/uploads/:width(\\d+)x:height(\\d+)-:greyscale-:image", download_image);
 app.get("/uploads/:width(\\d+)x:height(\\d+)-:image", download_image);
 
+app.get("/uploads/_x:height(\\d+)-:greyscale-:image", download_image);
 app.get("/uploads/_x:height(\\d+)-:image", download_image);
 
+app.get("/uploads/:width(\\d+)x_-:greyscale-:image", download_image);
 app.get("/uploads/:width(\\d+)x_-:image", download_image);
 
+app.get("/uploads/:greyscale-:image", download_image);
 app.get("/uploads/:image", download_image);
 
 // app.get("/uploads/:image", (req, res) => {
