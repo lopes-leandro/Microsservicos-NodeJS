@@ -28,6 +28,16 @@ app.param("image", (req, res, next, image) => {
     return next();
 });
 
+// indica ao serviço para retornar a imagem em tons de cinza
+app.param("greyscale", (req, res, next, greyscale) => {
+    
+    if (greyscale != "bw") return next("route");
+
+    req.greyscale = true;
+
+    return next();
+});
+
 function download_image(req, res) {
     fs.access(req.localpath, fs.constants.R_OK, (err) => {
         if (err) return res.status(404).end();
@@ -39,9 +49,13 @@ function download_image(req, res) {
              * fit: by default 'cover'
              * ('contain', 'fill', 'inside' ou 'outside')
              **************************************************/
-            image.resize(req.width, req.height, {fit: 'fill'});
+            image.resize(req.width, req.height, { fit: 'fill' });
         } else {
             image.resize(req.width, req.height);
+        }
+
+        if (req.greyscale) {
+            image.greyscale();
         }
 
         res.setHeader("Content-Type", "image/" + path.extname(req.image).substr(1));
@@ -50,12 +64,16 @@ function download_image(req, res) {
     });
 }
 
+app.get("/uploads/:width(\\d+)x:height(\\d+)-:greyscale-:image", download_image);
 app.get("/uploads/:width(\\d+)x:height(\\d+)-:image", download_image);
 
+app.get("/uploads/_x:height(\\d+)-:greyscale-:image", download_image);
 app.get("/uploads/_x:height(\\d+)-:image", download_image);
 
+app.get("/uploads/:width(\\d+)x_-:greyscale-:image", download_image);
 app.get("/uploads/:width(\\d+)x_-:image", download_image);
 
+app.get("/uploads/:greyscale-:image", download_image);
 app.get("/uploads/:image", download_image);
 
 // app.get("/uploads/:image", (req, res) => {
@@ -72,18 +90,15 @@ app.get("/uploads/:image", download_image);
 // });
 
 app.head("/uploads/:image", (req, res) => {
-    fs.access( req.localpath, fs.constants.R_OK, (err) => {
-            res.status(err ? 404 : 200).end();
-        }        
+    fs.access(req.localpath, fs.constants.R_OK, (err) => {
+        res.status(err ? 404 : 200).end();
+    }
     );
 });
 
 
-app.post("/uploads/:image", bodyparser.raw({
-    limit: "100mb",
-    type: "image/*"
-}), (req, res) => {
-    
+app.post("/uploads/:image", bodyparser.raw({limit: "100mb", type: "image/*"}), (req, res) => {
+
     let fd = fs.createWriteStream(req.localpath, {
         flags: "w+",
         encoding: "binary"
@@ -92,7 +107,7 @@ app.post("/uploads/:image", bodyparser.raw({
     fd.end(req.body);
 
     fd.on("close", () => {
-        res.send({status: "ok", size: req.body.length});
+        res.send({ status: "ok", size: req.body.length });
     });
 });
 
