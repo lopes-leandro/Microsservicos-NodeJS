@@ -45,7 +45,7 @@ function download_image(req, res) {
         let image = sharp(req.localpath);
         let width = +req.query.width;
         let height = +req.query.height;
-        let greyscale = (req.query.greyscale == "y");
+        let greyscale = ["y", "yes", "1", "on"].includes(req.query.greyscale);
 
         if (width > 0 && height > 0) {
             /*
