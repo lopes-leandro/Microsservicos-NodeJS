@@ -97,10 +97,7 @@ app.head("/uploads/:image", (req, res) => {
 });
 
 
-app.post("/uploads/:image", bodyparser.raw({
-    limit: "100mb",
-    type: "image/*"
-}), (req, res) => {
+app.post("/uploads/:image", bodyparser.raw({limit: "100mb", type: "image/*"}), (req, res) => {
 
     let fd = fs.createWriteStream(req.localpath, {
         flags: "w+",
